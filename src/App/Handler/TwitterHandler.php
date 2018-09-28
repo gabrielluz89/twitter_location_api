@@ -50,7 +50,7 @@ class TwitterHandler implements RequestHandlerInterface
             if ((is_numeric($lat)) and (is_numeric($long)))
                 $params = ['lat' => $lat, 'long' => $long];
         }
-
+        //http://dev.virtualearth.net/REST/v1/Locations/37.795917,-122.39966?o=json&key=ArEYzz06b5sFVh7e02K8ONBas5I-ALF-PkZvj6vW4Ymj1VGQJWDLM-U2x4TQtBuJ
         $params = isset($params) ? $params : ['query' => str_replace([',','-','.'],' ',$location)];
         $location = $this->getReturn('geo/search.json', $params);
 
