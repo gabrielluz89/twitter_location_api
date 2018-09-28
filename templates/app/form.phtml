@@ -4,7 +4,7 @@
 		<h1>Twitter Api</h1>
 
 		<div class="alert alert-primary" role="alert">
-			Type the twitter account to discover the estimated location!
+			Type a twitter account to discover the location!
 		</div>
 
 		<div class="form-inline">
@@ -36,10 +36,11 @@
 		} else {
 			Ajax.get('/api/twitter/'+account, function(response){
 				if(!response.successful) {
+					$('#search-content').css('display', 'none');
 					swal({
 					  type: 'error',
 					  title: 'Oops...',
-					  text: (response.data.error !== undefined ? response.data.error : response.data.responseJSON.error.message) 
+					  html: (response.data.error !== undefined ? response.data.error : response.data.responseJSON.error.message) 
 					})
 				} else {
 					$('#search-content').css('display', 'block');

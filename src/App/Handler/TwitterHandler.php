@@ -11,6 +11,7 @@ use Zend\Diactoros\Response\JsonResponse;
 use GuzzleHttp\Client;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Subscriber\Oauth\Oauth1;
+use Guzzle\Http\Exception\ClientErrorResponseException;
 
 class TwitterHandler implements RequestHandlerInterface
 {
@@ -21,22 +22,16 @@ class TwitterHandler implements RequestHandlerInterface
             $params = ['screen_name' => $account, 'count' => 1];
             $return = $this->handleReturn($this->getReturn('statuses/user_timeline.json', $params));
         } catch (\Exception $e) {
-            if(substr($e->getMessage(),0,12) == 'Client error') {
-                $return = ['successful' => false, 'error' => 'User "'.$account.'" not found!'];
-            } else {
-                $return = ['successful' => false, 'error' => $e->getMessage()]; 
-            }
+            $return = $this->getErrorMessage($e->getCode(), $account);
         }
         return new JsonResponse($return);
     }
 
     public function handleReturn($return) {
-        if(!isset($return[0]))
-            throw new \Exception('Client error');
+        if(!is_array($return) || !isset($return[0]))
+            throw new \Exception('Client error', 404);
 
-
-        $location = !empty($return[0]['user']['location']) ? str_replace('ÜT: ', '', $return[0]['user']['location']) : 'Location not found';
-        $location = $this->getLocation($location);
+        $location = !empty($return[0]['user']['location']) ? $this->getLocation(str_replace('ÜT: ', '', $return[0]['user']['location'])) : 'Location not found';
         $link = !empty($return[0]['user']['location']) ? 'https://maps.google.com/?q='.$location : false;
 
 
@@ -50,21 +45,19 @@ class TwitterHandler implements RequestHandlerInterface
 
     public function getLocation($location) {
         $result = explode(",", $location);
-        $lat = trim($result[0]);
-        $long = trim($result[1]);
-        if ((is_numeric($lat)) and (is_numeric($long))) {
-            $params = ['lat' => $lat, 'long' => $long];
-        } else {
-            $params = ['query' => $location];
+        if(isset($result[1])) {
+            $lat = trim($result[0]); $long = trim($result[1]);
+            if ((is_numeric($lat)) and (is_numeric($long)))
+                $params = ['lat' => $lat, 'long' => $long];
         }
+
+        $params = isset($params) ? $params : ['query' => str_replace([',','-','.'],' ',$location)];
         $location = $this->getReturn('geo/search.json', $params);
-            var_dump($location);
-        die;
-        foreach ($location as $key => $row) {
-            echo'<br>';
-        }
-        //37.795917
-        //-122.39966
+
+        $location = $location['result']['places'][0];
+        $location = $location['full_name'].' - '.$location['country'];
+        
+        return $location;
     }
 
     public function getReturn($url, $params) 
@@ -88,8 +81,24 @@ class TwitterHandler implements RequestHandlerInterface
             $response = $client->get($url,['query' => $params]);
 
             return json_decode($response->getBody()->getContents(),true);  
-        } catch (\Exception $e) {
-            return $e->getMessage();
+        } catch (ClientErrorResponseException $exception) {
+            return $exception->getResponse()->getBody(true);
         }
+    }
+
+    public function getErrorMessage($code, $account) {
+        $return['successful'] = false;
+        if($code == '404') {
+            $return['error'] = 'Error '.$code.' <br> User "'.$account.'" not found!';
+        } else if($code == '401') {
+            $return['error'] = 'Error '.$code.' <br> User "'.$account.'" not authorized!'; 
+        } else if($code == '429') {
+            $return['error'] = 'Error '.$code.' <br> Too many requests!'; 
+        }else if($code == '500') {
+            $return['error'] = 'Error '.$code.' <br> Internal server error!'; 
+        } else {
+            $return['error'] = $e->getMessage();
+        }
+        return $return;
     }
 }
