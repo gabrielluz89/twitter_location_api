@@ -65,7 +65,7 @@ class TwitterHandler implements RequestHandlerInterface
             $location = $address['full_name'].' - '.$address['country'];       
         } else {
             $address = $return['resourceSets'][0]['resources'][0]['address'];
-            $location = $address['formattedAddress'];
+            $location = $address['formattedAddress'].' - '.$address['countryRegion'];
         }
 
         
