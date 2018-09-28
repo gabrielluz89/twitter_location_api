@@ -1,0 +1,58 @@
+<div class="row" style="width: 500px; margin: 100px auto;">
+	<div class="col-md-12"">
+
+		<h1>Twitter Api</h1>
+
+		<div class="alert alert-primary" role="alert">
+			Type the twitter account to discover the estimated location!
+		</div>
+
+		<div class="form-inline">
+			<div class="form-group">
+				<input type="text" class="form-control" id="account" placeholder="teste">
+			</div>
+			<button type="button" class="btn btn-primary" style="margin-left:20px;" onClick="search($('#account').val())">Search!</button>
+		</div>
+
+		<div class="card text-center" id="search-content" style="margin-top:20px; display:none;">
+			<div class="card-body">
+				<h5 class="card-title" id="search-name"></h5>
+				<p class="card-text" id="search-location"></p>
+				<a href="#" id="search-link" class="btn btn-primary" target="_blank">Check the map!</a>
+			</div>
+		</div>
+
+	</div>
+</div>
+
+<script type="text/javascript">
+	function search(account) {
+		if(account == '') {
+			swal({
+			  type: 'error',
+			  title: 'Oops...',
+			  text: "You didn't tell us your account!"
+			})
+		} else {
+			Ajax.get('/api/twitter/'+account, function(response){
+				if(!response.successful) {
+					swal({
+					  type: 'error',
+					  title: 'Oops...',
+					  text: (response.data.error !== undefined ? response.data.error : response.data.responseJSON.error.message) 
+					})
+				} else {
+					$('#search-content').css('display', 'block');
+					$('#search-name').html(response.data.name);
+					$('#search-location').html(response.data.location);
+					if(response.data.link !== false) {
+						$('#search-link').attr('href', response.data.link);
+						$('#search-link').css('display', 'block');
+					} else {
+						$('#search-link').css('display', 'none');
+					}
+				}
+			});
+		}
+	}
+</script>
