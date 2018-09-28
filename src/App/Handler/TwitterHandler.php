@@ -27,7 +27,7 @@ class TwitterHandler implements RequestHandlerInterface
         return new JsonResponse($return);
     }
 
-    public function handleReturn($return) {
+    private function handleReturn($return) {
         if(!is_array($return) || !isset($return[0]))
             throw new \Exception('Return not found', 404);
 
@@ -43,7 +43,7 @@ class TwitterHandler implements RequestHandlerInterface
         ];
     }
 
-    public function getLocation($location) {
+    private function getLocation($location) {
         //FIRST CHECK BING MAPS API IF THERE'S ANY INFORMATION ABOUT THE LOCATION INFORMED
         $params = ['o'=>'json', 'key'=>'ArEYzz06b5sFVh7e02K8ONBas5I-ALF-PkZvj6vW4Ymj1VGQJWDLM-U2x4TQtBuJ'];
         $return = $this->getApiReturn('http://dev.virtualearth.net/REST/v1/Locations/'.$location, $params);
@@ -72,7 +72,7 @@ class TwitterHandler implements RequestHandlerInterface
         return $location;
     }
 
-    public function getApiReturn($url, $params, $oauth = false) 
+    private function getApiReturn($url, $params, $oauth = false) 
     {
         try {
 
@@ -107,7 +107,7 @@ class TwitterHandler implements RequestHandlerInterface
         ]);
     }
 
-    public function getErrorMessage($message, $code, $account) {
+    private function getErrorMessage($message, $code, $account) {
         $return['successful'] = false;
         if($code == '404') {
             $return['error'] = 'Error '.$code.' <br> User "'.$account.'" not found!';
